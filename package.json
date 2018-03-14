@@ -7,7 +7,10 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "vue": "^2.5.13"
+    "buefy": "^0.6.3",
+    "rxjs": "^5.5.7",
+    "vue": "^2.5.13",
+    "vue-rx": "^5.0.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.0.0-beta.6",

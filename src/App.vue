@@ -1,10 +1,16 @@
 <template>
   <section>
-    <h1>vue-rx lessons</h1>
+    <h1>{{interval$}}</h1>
   </section>
 </template>
 
 <script>
-export default {}
+import { Observable } from "rxjs"
+
+export default {
+  subscriptions: {
+    interval$: Observable.interval(1000)
+  }
+}
 </script>
 
