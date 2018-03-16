@@ -1,6 +1,8 @@
 <template>
   <section class="section">
-    <button class="button" :disabled="disabled$" v-stream:click="click$">{{buttonText$}}</button>
+    <button class="button" :disabled="disabled$" v-stream:click="{subject:click$, data:1}">{{buttonText$}}</button>
+    <button class="button" :disabled="disabled$" v-stream:click="{subject:click$, data:4}">{{buttonText$}}</button>
+    <button class="button" :disabled="disabled$" v-stream:click="{subject:click$, data:5}">{{buttonText$}}</button>
     <h1 class="title">{{name$}}</h1>
     <img v-stream:error="imageError$" :src="image$" alt="">
   </section>
@@ -18,8 +20,10 @@ export default {
       )
 
     const luke$ = this.click$
-      .mapTo(
-        "https://starwars.egghead.training/people/1"
+      .pluck("data")
+      .map(
+        id =>
+          `https://starwars.egghead.training/people/${id}`
       )
       .exhaustMap(createLoader)
       .catch(err =>
