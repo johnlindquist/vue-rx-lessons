@@ -1,6 +1,6 @@
 <template>
   <section class="section">
-    <button class="button" v-stream:click="click$">Click</button>
+    <button class="button" :disabled="disabled$" v-stream:click="click$">{{buttonText$}}</button>
     <h1 class="title">{{name$}}</h1>
     <img v-stream:error="imageError$" :src="image$" alt="">
   </section>
@@ -29,6 +29,15 @@ export default {
       )
       .share()
 
+    const disabled$ = Observable.merge(
+      this.click$.mapTo(true),
+      luke$.mapTo(false)
+    ).startWith(false)
+
+    const buttonText$ = disabled$.map(
+      bool => (bool ? "Loading..." : "Load")
+    )
+
     const name$ = luke$.pluck("name")
     const loadImage$ = luke$
       .pluck("image")
@@ -47,7 +56,9 @@ export default {
     )
     return {
       name$,
-      image$
+      image$,
+      disabled$,
+      buttonText$
     }
   }
 }
