@@ -1,7 +1,7 @@
 <template>
   <section class="section">
     <b-tabs v-model="activeTab">
-      <b-tab-item v-for="person of people" :key="person.id" :label="person.name"></b-tab-item>
+      <b-tab-item v-for="person of people$" :key="person.id" :label="person.name"></b-tab-item>
     </b-tabs>
 
     <h1 class="title">{{name$}}</h1>
@@ -15,29 +15,30 @@ import { Observable } from "rxjs"
 export default {
   data() {
     return {
-      activeTab: 0,
-      people: [
-        { name: "Luke", id: 1 },
-        { name: "Darth", id: 4 },
-        { name: "Leia", id: 5 },
-        { name: "Yoda", id: 20 }
-      ]
+      activeTab: 0
     }
   },
   domStreams: ["click$", "imageError$"],
   subscriptions() {
-    const activeTab$ = this.$watchAsObservable(
-      "activeTab",
-      { immediate: true }
-    ).pluck("newValue")
-
     const createLoader = url =>
       Observable.from(this.$http.get(url)).pluck(
         "data"
       )
 
+    const people$ = createLoader(
+      `https://starwars.egghead.training/people`
+    ).map(people => people.slice(0, 7))
+
+    const activeTab$ = this.$watchAsObservable(
+      "activeTab",
+      { immediate: true }
+    ).pluck("newValue")
+
     const luke$ = activeTab$
-      .map(tabId => this.people[tabId].id)
+      .combineLatest(
+        people$,
+        (tabId, people) => people[tabId].id
+      )
       .map(
         id =>
           `https://starwars.egghead.training/people/${id}`
@@ -80,7 +81,8 @@ export default {
       image$,
       disabled$,
       buttonText$,
-      activeTab$
+      activeTab$,
+      people$
     }
   }
 }
