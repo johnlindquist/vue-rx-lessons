@@ -27,7 +27,6 @@ export default {
           "https://starwars.egghead.training/people/2"
         )
       )
-      .share()
 
     const name$ = luke$.pluck("name")
     const loadImage$ = luke$
