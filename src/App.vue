@@ -10,9 +10,15 @@
 </template>
 
 <script>
-import { Observable } from "rxjs"
-
-console.clear()
+import { from, combineLatest, merge } from "rxjs"
+import {
+  pluck,
+  map,
+  switchMap,
+  catchError,
+  share,
+  mapTo
+} from "rxjs/operators"
 
 export default {
   data() {
@@ -22,6 +28,11 @@ export default {
   },
   domStreams: ["click$", "imageError$"],
   subscriptions() {
+    const createLoader = url =>
+      from(this.$http.get(url)).pipe(
+        pluck("data")
+      )
+
     const cache = {}
     const cachePerson = cache => url => {
       return cache[url]
@@ -29,69 +40,53 @@ export default {
         : (cache[url] = createLoader(url))
     }
 
-    const createLoader = url =>
-      Observable.from(this.$http.get(url)).pluck(
-        "data"
-      )
-
     const people$ = createLoader(
       `https://starwars.egghead.training/people`
-    ).map(people => people.slice(0, 7))
+    )
 
     const activeTab$ = this.$watchAsObservable(
       "activeTab",
       { immediate: true }
-    ).pluck("newValue")
+    ).pipe(pluck("newValue"))
 
-    const luke$ = activeTab$
-      .combineLatest(
-        people$,
-        (tabId, people) => people[tabId].id
-      )
-      .map(
+    const person$ = combineLatest(
+      activeTab$,
+      people$,
+      (tabId, people) => people[tabId].id
+    ).pipe(
+      map(
         id =>
           `https://starwars.egghead.training/people/${id}`
-      )
-      .switchMap(cachePerson(cache))
-      .catch(err =>
+      ),
+      switchMap(cachePerson(cache)),
+      catchError(err =>
         createLoader(
-          "https://starwars.egghead.training/people/2"
+          `https://starwars.egghead.training/people/2`
         )
-      )
-      .share()
-
-    const disabled$ = Observable.merge(
-      this.click$.mapTo(true),
-      luke$.mapTo(false)
-    ).startWith(false)
-
-    const buttonText$ = disabled$.map(
-      bool => (bool ? "Loading..." : "Load")
+      ),
+      share()
     )
 
-    const name$ = luke$.pluck("name")
-    const loadImage$ = luke$
-      .pluck("image")
-      .map(
+    const name$ = person$.pipe(pluck("name"))
+
+    const loadImage$ = person$.pipe(
+      pluck("image"),
+      map(
         image =>
           `https://starwars.egghead.training/${image}`
       )
-
-    const failImage$ = this.imageError$.mapTo(
-      `http://via.placeholder.com/400x400`
     )
 
-    const image$ = Observable.merge(
-      loadImage$,
-      failImage$
+    const failImage$ = this.imageError$.pipe(
+      mapTo(`http://via.placeholder.com/400x400`)
     )
+
+    const image$ = merge(loadImage$, failImage$)
+
     return {
+      people$,
       name$,
-      image$,
-      disabled$,
-      buttonText$,
-      activeTab$,
-      people$
+      image$
     }
   }
 }
